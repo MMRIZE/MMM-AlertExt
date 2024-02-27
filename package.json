@@ -1,0 +1,24 @@
+{
+  "name": "mmm-alertext",
+  "version": "1.0.0",
+  "description": "Alternative alert module for MagicMirror",
+  "main": "MMM-AlertExt.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MMRIZE/MMM-AlertExt.git"
+  },
+  "keywords": [
+    "MagicMiror",
+    "module",
+    "alert"
+  ],
+  "author": "eouia0819@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MMRIZE/MMM-AlertExt/issues"
+  },
+  "homepage": "https://github.com/MMRIZE/MMM-AlertExt#readme"
+}

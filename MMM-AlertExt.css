@@ -1,0 +1,199 @@
+/* stylelint-disable no-descending-specificity */
+
+#ax {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  z-index: 100;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  --font-size: 14px;
+}
+
+#ax .ax-slot {
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-flow: column-reverse nowrap;
+  gap: 10px;
+  overflow: hidden;
+  place-content: flex-start flex-end;
+}
+
+#ax .ax-slot.corner {
+  position: absolute;
+  width: 25%;
+  height: 50%;
+  z-index: 100;
+  overflow: hidden;
+}
+
+#ax .ax-slot.center {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 50%;
+  margin: 0 auto;
+  height: 50%;
+  z-index: 100;
+  overflow: hidden;
+}
+
+#ax .ax-slot.top {
+  --start-x: 0;
+  --start-y: -100%;
+  --end-x: 0;
+  --end-y: 200%;
+  mask-image: linear-gradient(to bottom, transparent, black 20%);
+}
+
+#ax .ax-slot.bottom {
+  flex-direction: column;
+  justify-content: flex-end;
+  mask-image: linear-gradient(to top, transparent, black 20%);
+
+  --start-x: 0;
+  --start-y: 100%;
+  --end-x: 0;
+  --end-y: -100%;
+}
+
+#ax .ax-slot.left {
+  --start-x: -100%;
+  --start-y: 0;
+  --end-x: -100%;
+  --end-y: 0;
+}
+
+#ax .ax-slot.right {
+  --start-x: 100%;
+  --start-y: 0;
+  --end-x: 100%;
+  --end-y: 0;
+}
+
+#ax-slot-top-left {
+  top: 0;
+  left: 0;
+}
+
+#ax-slot-top-right {
+  top: 0;
+  right: 0;
+}
+
+#ax-slot-bottom-left {
+  bottom: 0;
+  left: 0;
+}
+
+#ax-slot-bottom-right {
+  bottom: 0;
+  right: 0;
+}
+
+#ax-slot-top-center {
+  top: 0;
+}
+
+#ax-slot-bottom-center {
+  bottom: 0;
+}
+
+.ax-slot-popover {
+  min-width: 60%;
+  max-width: 90%;
+  background-color: transparent;
+  border: none;
+}
+
+ax-message {
+  --background-color: gray;
+  --border-color: white;
+  --font-color: black;
+}
+
+ax-message.log {
+  --background-color: gray;
+  --border-color: white;
+  --font-color: black;
+}
+
+ax-message.info {
+  --background-color: dodgerblue;
+  --border-color: white;
+  --font-color: white;
+}
+
+ax-message.warn {
+  --background-color: darkorange;
+  --border-color: white;
+  --font-color: black;
+}
+
+ax-message.error {
+  --background-color: darkred;
+  --border-color: white;
+  --font-color: white;
+}
+
+ax-message.debug {
+  --background-color: green;
+  --border-color: white;
+  --font-color: white;
+}
+
+ax-message.message {
+  --background-color: gray;
+  --border-color: white;
+  --font-color: white;
+}
+
+ax-message.notification {
+  --background-color: purple;
+  --border-color: white;
+  --font-color: white;
+}
+
+ax-message.exception {
+  --background-color: crimson;
+  --border-color: white;
+  --font-color: white;
+}
+
+ax-message.alert {
+  --background-color: black;
+  --border-color: gray;
+  --font-color: #ccc;
+}
+
+ax-message.alertNotification {
+  --background-color: black;
+  --border-color: gray;
+  --font-color: #ccc;
+}
+
+ax-message[popover]::backdrop {
+  /* backdrop-filter: grayscale(1); */
+  background-color: rgb(16 16 16/ 50%);
+}
+
+ax-message[popover] {
+  transition:
+    opacity 0.5s ease-in-out,
+    transform 0.5s ease-in-out,
+    display 0.5s allow-discrete;
+  opacity: 0;
+  transform: scaleX(0) scaleY(0);
+}
+
+ax-message[popover]:popover-open {
+  opacity: 1;
+  transform: scaleX(1) scaleY(1);
+}
+}
+}

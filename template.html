@@ -1,0 +1,128 @@
+<style>
+  :host {
+    --i-border-color: var(--border-color, #fff);
+    --i-background-color: var(--background-color, #ddd);
+    --i-font-color: var(--font-color, #000);
+    --i-icon-background-color: var(--icon-background-color, --background-color);
+    --i-font-size: var(--font-size, 1em);
+  }
+
+
+
+  .ax-message {
+    position: relative;
+    display: grid;
+    font-size: var(--i-font-size, 1em);
+    border: 1px solid var(--i-border-color);
+    color: var(--i-font-color);
+    border-radius: 5px;
+    box-shadow: 5px 5px 5px rgb(0 0 0 / 20%);
+    grid-template-columns: calc(var(--i-font-size) * 2) auto;
+    grid-template-rows: auto auto;
+    grid-template-areas: "icon title" "icon message";
+    animation: appear 0.5s ease-in-out;
+    line-height: 110%;
+  }
+
+  @keyframes appear {
+    from {
+      opacity: 0;
+      transform: translate3d(var(--start-x), var(--start-y), 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .ax-message.ax-message-die {
+    animation: disappear 0.5s ease-in-out;
+  }
+
+  @keyframes disappear {
+    from {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      opacity: 0;
+      transform: translate3d(var(--end-x), var(--end-y), 0);
+    }
+  }
+
+  .ax-message::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--i-background-color);
+    z-index: -1;
+    filter: grayscale(0.5);
+  }
+
+  .icon {
+    grid-area: icon;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--i-icon-background-color);
+    backdrop-filter: saturate(2) brightness(1.5);
+  }
+
+  .title {
+    grid-area: title;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding: 2px 5px;
+  }
+
+  .message-body {
+    grid-area: message;
+    padding: 2px 5px;
+  }
+
+  :host(.popover) {
+    --i-font-size: calc(var(--font-size, 1em) * 1.5);
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    min-width: 60%;
+    max-width: 90%;
+  }
+
+  :host(.popover) .ax-message {
+    font-size: calc(--i-font-size * 0.8);
+    grid-template-areas: "icon title" "message message";
+    grid-template-columns: calc(var(--i-font-size) * 2) auto;
+    grid-template-rows: calc(var(--i-font-size) * 2) auto;
+
+  }
+
+
+  :host(.popover) .title {
+    padding: 0 10px;
+    text-align: left;
+    line-height: calc(var(--i-font-size) * 2);
+    height: calc(var(--i-font-size) * 2);
+    background-color: var(--i-icon-background-color);
+    backdrop-filter: saturate(2) brightness(1.5);
+  }
+
+  :host(.popover) .message-body {
+    padding: 10px;
+    text-align: center;
+  }
+</style>
+<div class="ax-message">
+  <div class="icon">
+    <slot name="icon"></slot>
+  </div>
+  <div class="title">
+    <slot name="title"></slot>
+  </div>
+  <div class="message-body">
+    <slot name="message"></slot>
+  </div>
+</div>
