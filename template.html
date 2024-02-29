@@ -78,7 +78,7 @@
     padding: 2px 5px;
   }
 
-  .message-body {
+  .message {
     grid-area: message;
     padding: 2px 5px;
   }
@@ -110,7 +110,7 @@
     backdrop-filter: saturate(2) brightness(1.5);
   }
 
-  :host(.popover) .message-body {
+  :host(.popover) .message {
     padding: 10px;
     text-align: center;
   }
@@ -122,7 +122,7 @@
   <div class="title">
     <slot name="title"></slot>
   </div>
-  <div class="message-body">
+  <div class="message">
     <slot name="message"></slot>
   </div>
 </div>

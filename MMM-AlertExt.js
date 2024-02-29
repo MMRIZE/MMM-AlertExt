@@ -8,6 +8,7 @@ Module.register('MMM-AlertExt', {
       'top-center': 1,
       'bottom-center': 5,
     },
+    modularConfig: null, // './config/config.mjs',
     message: {
       disabled: false,
       slot: 'bottom-right',
@@ -79,7 +80,7 @@ Module.register('MMM-AlertExt', {
     notification: {
       disabled: true,
       slot: 'top-right',
-      duration: 15000,
+      duration: 10000,
       klass: 'notification',
       converter: (notification, payload, sender) => {
         return {
@@ -91,7 +92,7 @@ Module.register('MMM-AlertExt', {
     exception: {
       disabled: true,
       slot: 'bottom-center',
-      duration: 15000,
+      duration: 30000,
       icon: 'fa fa-bug',
       converter: (exception, location, message) => {
         return {
@@ -117,10 +118,22 @@ Module.register('MMM-AlertExt', {
   },
 
   prepareConfig: async function () {
+    let m = {}
+    if (this.config.modularConfig) {
+      try {
+        const c = await import('/' + this.file(this.config.modularConfig))
+        m = c.config
+      } catch (e) {
+        console.error('[AX] Failed to load modular config', e)
+      }
+    }
+    this.config = { ...this.defaults, ...this.config, ...m }
     this.config.log = { ...this.defaults.log, ...this.config.log }
     this.config.alert = { ...this.defaults.alert, ...this.config.alert }
     this.config.alertNotification = { ...this.defaults.alertNotification, ...this.config.alertNotification }
     this.config.exception = { ...this.defaults.exception, ...this.config.exception }
+    this.config.message = { ...this.defaults.message, ...this.config.message }
+    this.config.notification = { ...this.defaults.notification, ...this.config.notification }
     const slots = [ 'top-left', 'top-right', 'bottom-left', 'bottom-right', 'top-center', 'bottom-center' ]
     this.config.slotMaxStack = slots.reduce((acc, slot) => {
       acc[ slot ] = (this.config.slotMaxStack[ slot ]) ? this.config.slotMaxStack[ slot ] : this.config.defaultMaxStack
@@ -214,6 +227,7 @@ Module.register('MMM-AlertExt', {
       class extends HTMLElement {
         #timer = null
         #active = false
+        #callback = async () => { }
         constructor() {
           super()
           this.attachShadow({ mode: 'open' })
@@ -234,23 +248,99 @@ Module.register('MMM-AlertExt', {
             }, duration)
           }
         }
+
+        setDuration(ms) {
+          if (isNaN(ms)) return
+          this.setAttribute('duration', ms)
+          this.applyDuration()
+        }
+
+        setTitle(title) {
+          let slotted = this.shadowRoot.querySelector('slot[name="title"]').assignedNodes()[0]
+          if (!slotted) {
+            slotted = document.createElement('div')
+            slotted.slot = 'title'
+            this.appendChild(slotted)
+          }
+          slotted.innerHTML = title
+        }
+
+        setMessage(message) {
+          let slotted = this.shadowRoot.querySelector('slot[name="message"]').assignedNodes()[ 0 ]
+          if (!slotted) {
+            slotted = document.createElement('div')
+            slotted.slot = 'message'
+            this.appendChild(slotted)
+          }
+          slotted.innerHTML = message
+        }
+
+        setIcon(icon, { useIconify = true } = {}) {
+          if (!icon) return
+          let slotted = this.shadowRoot.querySelector('slot[name="icon"]').assignedNodes()[ 0 ]
+          if (!slotted) {
+            slotted = document.createElement('div')
+            slotted.slot = 'icon'
+            this.appendChild(slotted)
+          }
+          const iconifyPattern = /^\S+:\S+$/
+          const iconify = icon.match(iconifyPattern)?.[ 0 ]
+          const faPattern = /fa[srlb]?-/
+          const fa = icon.match(faPattern)?.[ 0 ]
+          if (useIconify && iconify) {
+            const iconifyDom = document.createElement('iconify-icon')
+            iconifyDom.icon = iconify
+            iconifyDom.inline = true
+            slotted.innerHTML = iconifyDom.outerHTML
+          } else if (fa) {
+            slotted.innerHTML = `<span class="${icon}"></span>`
+          } else {
+            slotted.innerHTML = icon
+          }
+        }
+
+        setKlass(klassList) {
+          if (!Array.isArray(klassList)) klassList = [ klassList ]
+          const classes = Array.from(this.classList)
+          classes.forEach((klass) => {
+            this.classList.remove(klass)
+          })
+          klassList.forEach((klass) => {
+            this.classList.add(klass)
+          })
+        }
+
         die() {
           const axMessage = this.shadowRoot.querySelector('.ax-message')
           axMessage.classList.add('ax-message-die')
-          axMessage.onanimationend = (event) => {
+          axMessage.onanimationend = async (event) => {
+            await this.#callback('DIED', this.id)
+            this.#callback = null
             this.parentNode.removeChild(this)
           }
         }
+
+        setCallback(callback) {
+          if (typeof callback !== 'function') return
+          this.#callback = async (event, id) => {
+            await callback(event, id, this)
+          }
+        }
+
         connectedCallback() {
           this.#active = true
+          this.#callback('CONNECTED', this.id)
           this.applyDuration()
         }
+
         disconnectedCallback() {
           this.#active = false
           clearTimeout(this.#timer)
         }
+
         attributeChangedCallback(name, oldValue, newValue) {
           if (name === 'duration') {
+            console.log(name, oldValue, newValue)
             this.applyDuration()
           }
         }
@@ -299,50 +389,25 @@ Module.register('MMM-AlertExt', {
 
   message: function (payload, type = 'message') {
     if (!payload) return false
-    let { title, message, klass, duration, slot, icon } = payload
+    let { id, title, message, klass, duration, slot, icon, callback } = payload
+    id = id ?? 'ax-message-instance-' + Date.now() + Math.random().toString(36).substr(2, 9)
+    const already = document.getElementById(id)
+    if (already) {
+      already.die()
+    }
     title = title ?? ''
     klass = klass ?? (this.config?.[ type ]?.klass ?? 'message')
     duration = duration ?? (this.config?.[type]?.duration ?? 10000)
     slot = slot ?? (this.config?.[ type ]?.slot ?? 'bottom-right')
     icon = icon ?? (this.config?.[ type ]?.icon ?? '')
+    callback = callback ?? (() => {  })
     const m = document.createElement('ax-message')
-    const id = Date.now() + Math.random().toString(36).substr(2, 9)
     m.id = id
-    const titleSlot = document.createElement('div')
-    titleSlot.classList.add('ax-title')
-    titleSlot.innerHTML = title
-    titleSlot.slot = 'title'
-    const messageSlot = document.createElement('div')
-    messageSlot.classList.add('ax-message')
-    messageSlot.innerHTML = message
-    messageSlot.slot = 'message'
-    const iconSlot = document.createElement('div')
-    iconSlot.classList.add('ax-icon')
-    iconSlot.slot = 'icon'
-    if (icon) {
-      const iconifyPattern = /^\S+:\S+$/
-      const iconify = icon.match(iconifyPattern)?.[ 0 ]
-      const faPattern = /fa[srlb]?-/
-      const fa = icon.match(faPattern)?.[ 0 ]
-      if (this.config.useIconify && iconify) {
-        const iconifyDom = document.createElement('iconify-icon')
-        iconifyDom.icon = iconify
-        iconifyDom.inline = true
-        iconSlot.appendChild(iconifyDom)
-      } else if (fa) {
-        const faDom = document.createElement('span')
-        faDom.className = icon
-        iconSlot.appendChild(faDom)
-      } else {
-        iconSlot.innerHTML = icon
-      }
-    }
-
-    m.appendChild(titleSlot)
-    m.appendChild(messageSlot)
-    m.appendChild(iconSlot)
-    m.setAttribute('duration', duration)
-    m.setAttribute('klass', klass)
+    m.setCallback(callback)
+    m.setTitle(title)
+    m.setMessage(message)
+    m.setIcon(icon)
+    m.setDuration(duration)
     m.classList.add(klass)
 
     if (slot === 'popover') {
@@ -360,7 +425,7 @@ Module.register('MMM-AlertExt', {
       }
       container.appendChild(m)
     } else {
-      console.error('AX: Invalid slot', slot)
+      console.error('[AX] Invalid slot', slot)
     }
   },
 

@@ -9,7 +9,7 @@ Alternative alert module for MagicMirror
 ## Why?
 - I need a more decorated alert feature than the current default `alert` module.
 - Not only `SHOW_ALERT`, I want to see more various notifications and messages on the screen. (e.g. `Log.log()`, `UnhandledExceptionError`, `CALENDAR_UPDATED` notifications...)
-- I made this module for a kind of shared output-presenter of some modules.
+- I make this module for a kind of shared programmable output-presenter of some modules.
 
 ## Installation
 ```sh
@@ -50,6 +50,7 @@ Hmmm... I can bet the below detailed example would not be needed for most users,
     useIconify: true,
     defaultMaxStack: 10,
     template: './template.html',
+    modularConfig: null, // './config/config.mjs'
     slotMaxStack: {
       'top-center': 1,
       'bottom-center': 5,
@@ -69,6 +70,7 @@ Hmmm... I can bet the below detailed example would not be needed for most users,
 - **`defaultMaxStack`**: How many messages would be stackable.
 - **`template`** : Path of custom template file to design message custom element.
 - **`slotMaxStack`** : You can set different maxStack counts per slot, instead of global `defaultMaxStack`. In this example, `bottom-center` slot would have max. 5 messages at a time. but `bottom-left` slot would have 10 by `defaultMaxStack`.
+- **`modulearConfig`** : Instead of MM's default `config/config.js`, you can describe individual modular config for this module in an independent file.(e.g. `config.mjs`) See the `MMM-AlertExt/config/config.mjs.example` file. It has a slightly different format(ECMAScript) rather than legacy CommonJS(CJS). It is useful to keep the main config file shorter.
 
 `alert: {}`, `alertNotification: {}`, `message: {}`, `notification: {}`, `log: {}` and `exception: {}` are the definition of behaviors of messages this module can handle.
 
@@ -121,7 +123,32 @@ message: {
 }
 ```
 
-## Config Deeper
+### Config Example - Modular config
+```js
+/* in MM's config.js */
+{
+  module: 'MMM-AlertExt',
+  config: {
+    modularConfig: './config/config.mjs'
+  }
+}
+```
+
+```js
+/* MMM-AlertExt/config/config.mjs */
+const config = {
+  defaultMaxSlot: 5,
+  alert: { disabled: true },
+  notification: {
+    ...
+    ...
+}
+
+export { config } // Don't remove this line.
+```
+> Instead of legacy CommonJS style, I prefer modern ECMAScript style (.mjs). Unfortunately, MM's default style is CJS. Don't confuse the file extension.
+
+## Dive deeper
 > Usually, a general user doesn't need below knowledge. The below information would be useful only to whom wants customization or development.
 
 ### 1. `SHOW_ALERT` (`alert` type)
@@ -175,6 +202,10 @@ Other modules can send `AX_MESSAGE` notifications to show custom messages on the
 ```js
 /* in other module */
 this.sendNotification('AX_MESSAGE',
+  title: 'Hello, there',
+  message: 'Are you happy now?',
+  slot: 'bottom-left',
+  duration: 5000,
 )
 ```
 This will show the message in the `bottom-left` slot with the given attributes. If some attributes are omitted, default config values will be applied.
@@ -185,9 +216,10 @@ message: { // Default config values for custom message
   duration: 10000,
   klass: 'message',
   converter: (payload, sender) => { ... }
+  callback: (signal, id, (obj)) => { ... }
 },
 ```
-Of course, you can redefine/override the default config values in your `config.js`.
+Of course, you can redefine/override the default config values in the configuration.
 
 
 ### 4. All other notifications
@@ -235,10 +267,11 @@ From various sources, to make a common message object, this module provides `con
 The default standard `message` object looks like this.
 ```js
 {
+  id: 'A1b2C3d4...',
   title: 'Notice'
   message: 'Time to Excersise!',
   klass: 'myCustomClass',
-  icon: 'fa-dumbbell',
+  icon: 'fa fa-dumbbell',
   slot: 'bottom-left',
   duration: 10000,
 }
@@ -343,7 +376,121 @@ ax-message.myCustomClass {
   --font-color: black;
 }
 ```
+Especially, each `Log` methods has its own class. (`log`, `info`, `debug`, `warn`, `error`)
+```css
+ax-message.info {
+  --background-color: dodgerblue;
+  --border-color: white;
+  --font-color: white;
+}
+```
 
 ### Redefine of custom HTML element `ax-message`
 `ax-message` is a custom element to display a complex message object on the MagicMirror. You can regard it as an HTML element like `div` or `img` tag.
-Its look and structure are defined in `template.html`. If you are experienced, you can redefine this custom element for your purpose. (In that case, you may not need any explanation from me. :D)
+Its look and structure are defined in `template.html`. If you are experienced, you can redefine this custom element for your purpose. (you may not need any explanation from me. :D)
+
+
+## Handling mesages.
+To control the message, there are some methods you can use.
+
+### callback
+You can assign `callback` as a payload when you emit your custom message or notification (including `SHOW_ALERT`). The `callback` function will be called when the message appears or disappears on the screen.
+
+```js
+/* In your module */
+this.sendNotification('AX_MESSAGE', {
+  id: 'myTestMessage',
+  title: 'TEST',
+  message: 'Lorem Ipsum ...',
+  duration: 0,
+  callback: (signal, id, msgObj) => {
+    if (signal === 'CONNECTED') {
+      console.log(`The message ${id} is shown`)
+      setTimeout(() => { msgObj.die() }, 5000)
+    }
+    if (signal === 'DIED') {
+      console.log(`The message ${id} is gone.`)
+    }
+  }
+})
+```
+`callback` could have these parameters.
+- `signal` : ATM, `CONNECTED` (when the message starts showing on the screen) and `DIED` (when the message disappears) are emittable.
+- `id` : An unique identifier of the message.
+- `msgObj` : `ax-message` element itself.
+> `msgObj` itself is the same with `document.getElementById(id)`
+
+
+### about `id`
+By default, `id` is auto-generated by the module. However, you can assign your own `id` manually when you create the message notification.
+
+If there is already a message that has the same `id` to the new creation, the previous message will be dismissed by force, and it will be replaced by this new one.
+
+See the example.
+```js
+/* In your module */
+this.sendNotification('AX_MESSAGE', {
+  id: 'message1',
+  title: 'I am immortal.',
+  message: 'I will live forever!',
+  duration: 0,
+})
+setTimeout(() => {
+  this.sendNotification('AX_MESSAGE', {
+    id: 'message1',
+    title: 'New King',
+    message: 'I can kill you.'
+  })
+}, 30000)
+```
+You can get the message element with this id.
+```js
+/* Somewhere in your module */
+this.sendNotification('AX_MESSAGE', {
+  id: 'abcd1234',
+  title: 'Find Me',
+  meesage: '...'
+})
+...
+/* And in another place */
+let msg = document.getElementById('abcd1234')
+if (msg) msg.setMessage('Found!')
+```
+
+### Methods of `ax-message`
+Once you obtain the message element, you can manipulate it with several prepared methods.
+
+- `.setTitle(string)`: Reset title.
+- `.setMessage(string)`: Reset message.
+- `.setIcon(string)`: Reset icon.
+- `.setKlass(string or string of Array)`: Reset klass.
+- `.setDuration(ms)`: Reset duration.
+- `.getDuration()`: get current duration.
+- `.die()`: Kill the message instantly by force.
+
+```js
+this.sendNotification('AX_MESSAGE', {
+    id: 'test',
+    title: 'Mutable',
+    message: '...',
+    duration: 100000,
+    callback: (signal, id, obj) => {
+      // obj === document.getElementById(id)
+      if (signal === 'CONNECTED') {
+        obj.setMessage('After 3 seconds, this will die.')
+        console.log(obj.getDuration())
+        setTimeout(() => { obj.die() }, 3000)
+      }
+    })
+  })
+```
+
+## History
+### 1.0.0 (2024-02-29)
+- Released
+
+
+## Author
+- Seongnoh Yi (eouia0819@gmail.com)
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Y8Y56IFLK)

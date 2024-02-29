@@ -1,0 +1,16 @@
+const config = {
+/* config example
+  useIconify: false,
+  message: {
+    disabled: false,
+    slot: 'bottom-right',
+    duration: 10000,
+    klass: 'message',
+    converter: (payload, sender) => {
+      return payload
+    },
+  },
+*/
+}
+
+export { config } // Don't remove this line.
