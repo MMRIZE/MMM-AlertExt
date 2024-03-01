@@ -45,7 +45,7 @@ Hmmm... I can bet the below detailed example would not be needed for most users,
 ```js
 {
   disabled: false, // When you want to stop using this module, just set it as `true`
-  module: 'MMM-AlertExt', // `Alert` is `prior` module, so doesn't need `position`
+  module: 'MMM-AlertExt', // `Alert` is `primary` module, so doesn't need `position`
   config: {
     useIconify: true,
     defaultMaxStack: 10,
