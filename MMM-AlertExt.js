@@ -359,8 +359,11 @@ Module.register('MMM-AlertExt', {
 
   notificationReceived: function (notification, payload, sender) {
     if (notification === 'AX_MESSAGE') {
+      let converter = (typeof this.config.message.converter === 'function')
+        ? this.config.message.converter
+        : this.defaults.message.converter
       if (this.config.message.disabled) return
-      this.message(payload, 'message')
+      this.message(converter(payload, sender), 'message')
       return
     }
 
