@@ -1,6 +1,6 @@
 {
   "name": "mmm-alertext",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Alternative alert module for MagicMirror",
   "main": "MMM-AlertExt.js",
   "scripts": {

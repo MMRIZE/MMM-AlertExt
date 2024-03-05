@@ -215,8 +215,9 @@ message: { // Default config values for custom message
   slot: 'bottom-right',
   duration: 10000,
   klass: 'message',
-  converter: (payload, sender) => { ... }
-  callback: (signal, id, (obj)) => { ... }
+  converter: (payload, sender) => { ... },
+  callback: (signal, id, (obj)) => { ... },
+  kill: false,
 },
 ```
 Of course, you can redefine/override the default config values in the configuration.
@@ -274,6 +275,7 @@ The default standard `message` object looks like this.
   icon: 'fa fa-dumbbell',
   slot: 'bottom-left',
   duration: 10000,
+  kill: false,
 }
 ```
 So, you may need to convert your notification to this standard format to display.
@@ -390,7 +392,7 @@ ax-message.info {
 Its look and structure are defined in `template.html`. If you are experienced, you can redefine this custom element for your purpose. (you may not need any explanation from me. :D)
 
 
-## Handling mesages.
+## Handling messages.
 To control the message, there are some methods you can use.
 
 ### callback
@@ -485,7 +487,37 @@ this.sendNotification('AX_MESSAGE', {
   })
 ```
 
+### Send a message again with the same `id`
+If you send a message again with the same `id`, the previous message that has the `id`, will be dismissed and a new message will be displayed.
+```js
+/* In some module */
+
+this.sendNotification('AX_MESSAGE', {id: 'abcd1234', title: 'Old message', ... })
+
+...
+
+this.sendNotification('AX_MESSAGE', {id: 'abcd1234', title: 'New message', ... })
+// This message will replace the old one.
+
+```
+
+With the `kill` flag, the message could be disappeared without replacement.
+```js
+/* In some module */
+this.sendNotification('AX_MESSAGE', {id: 'abcd1234', title: 'Some message', ... })
+
+...
+
+this.sendNotification('AX_MESSAGE', {id: 'abcd1234', kill: true })
+// The previous message will be dismissed by this notification.
+```
+
+
+
 ## History
+### 1.0.1 (2024-03-05)
+- Added: `kill` flag.
+
 ### 1.0.0 (2024-02-29)
 - Released
 

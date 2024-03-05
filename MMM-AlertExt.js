@@ -389,12 +389,13 @@ Module.register('MMM-AlertExt', {
 
   message: function (payload, type = 'message') {
     if (!payload) return false
-    let { id, title, message, klass, duration, slot, icon, callback } = payload
+    let { id, title, message, klass, duration, slot, icon, callback, kill } = payload
     id = id ?? 'ax-message-instance-' + Date.now() + Math.random().toString(36).substr(2, 9)
     const already = document.getElementById(id)
     if (already) {
       already.die()
     }
+    if (kill) return
     title = title ?? ''
     klass = klass ?? (this.config?.[ type ]?.klass ?? 'message')
     duration = duration ?? (this.config?.[type]?.duration ?? 10000)
