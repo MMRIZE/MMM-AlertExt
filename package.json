@@ -1,7 +1,7 @@
 {
   "name": "mmm-alertext",
   "version": "1.0.1",
-  "description": "Alternative alert module for MagicMirror",
+  "description": "Alternative alert module for MagicMirror.",
   "main": "MMM-AlertExt.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -11,7 +11,7 @@
     "url": "git+https://github.com/MMRIZE/MMM-AlertExt.git"
   },
   "keywords": [
-    "MagicMiror",
+    "MagicMirror",
     "module",
     "alert"
   ],
